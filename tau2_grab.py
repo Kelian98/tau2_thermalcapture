@@ -34,11 +34,13 @@ os.mkdir(new_dir)
 
 # Setting up log file
 log_acq = logging.getLogger()
-log_acq.setLevel(logging.DEBUG)
+log_acq.setLevel(logging.INFO)
 log_file = time_sync + '_Tau2_ACQ.log'
-handler = logging.FileHandler(new_dir+'/'+klog_file, 'w', 'utf-8')
+handler = logging.FileHandler(new_dir+'/'+log_file, 'w', 'utf-8')
 handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
 log_acq.addHandler(handler)
+
+from tau2_instructions import default_settings
 
 class TeaxGrabber(object):
     """
@@ -274,7 +276,7 @@ class TeaxGrabber(object):
         self._ftdi.purge_buffers()
         # self._ftdi.purge_rx_buffer()
         # self._ftdi.purge_tx_buffer()
-        
+        log_acq.info("Read buffer for {} seconds".format(duration))
         t = time.time()
         t_format = time.strftime('%Y-%m-%dT%H:%M:%S')
         while time.time()-t < duration: 
@@ -321,7 +323,8 @@ class TeaxGrabber(object):
                     list_img.append(None)
                 else:
                     list_img.append(array_14bits)
-                
+        
+        log_acq.info("Image sequence sliced")
         return list_img
 
     def plot_images(self, list_img):
@@ -337,7 +340,7 @@ class TeaxGrabber(object):
         for img in list_img:
             if img is not None:
                 plt.figure()
-                plt.imshow(img)
+                plt.imshow(img, cmap='seismic')
                 plt.colorbar()
             
         plt.show()
@@ -357,15 +360,22 @@ class TeaxGrabber(object):
             if img is not None:
                 hdu = fits.PrimaryHDU(img)
                 hdu.scale('int16')
+                hdu.header['CAMERA'] = 'FLIR TAU2'
+                hdu.header['IMTYPE'] = 'IR'
                 hdu.header['DATE-OBS'] = date_obs
+                hdu.header['FOCAL'] = 60 # in mm
+                hdu.header['APERTURE'] = 1.25
+                hdu.header['PXSIZE'] = 17 # in micrometer
                 hdu.header['INDEX'] = i
-                hdu.header['GAIN'] = default_settings['gain_mode']['value']
-                hdu.header['LENS'] = default_settings['lens_number']['value']
-                hdu.header['SHU-TEMP'] = default_settings['shutter_temperature']['value']
-                hdu.header['FFCMODE'] = default_settings['ffc_mode']['value']
-                hdu.header['FFCFRAME'] = default_settings['ffc_frames']['value']
-                hdu.header['XPMODE'] = default_settings['xp_mode']['value']
-                hdu.header['CMOSBD'] = default_settings['cmos_bit_depth']['value']
-                hdu.header['TLINEAR'] = default_settings['tlinear_mode']['value']
-                hdu.writeto(datetime.now().strftime('%Y_%m_%d_%H_%M_%S_flux_{}.fits'.format(i)), overwrite=True)
+                hdu.header['GAIN'] = default_settings['gain_mode']['value']
+                hdu.header['LENS'] = default_settings['lens_number']['value']
+                hdu.header['SHU-TEMP'] = default_settings['shutter_temperature']['value']
+                hdu.header['FFCMODE'] = default_settings['ffc_mode']['value']
+                hdu.header['FFCFRAME'] = default_settings['ffc_frames']['value']
+                hdu.header['XPMODE'] = default_settings['xp_mode']['value']
+                hdu.header['CMOSBD'] = default_settings['cmos_bit_depth']['value']
+                hdu.header['TLINEAR'] = default_settings['tlinear_mode']['value']
+                hdu.writeto(new_dir+'/'+datetime.now().strftime('%Y_%m_%d_%H_%M_%S_flux_{}.fits'.format(i)), overwrite=True)
                 i=i+1
+
+        log_acq.info("Image sequence written to FITS files")

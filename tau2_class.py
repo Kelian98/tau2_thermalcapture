@@ -21,7 +21,7 @@ from tau2_instructions import *
 
 # Setting up log file
 log_cmd = logging.getLogger()
-log_cmd.setLevel(logging.DEBUG)
+log_cmd.setLevel(logging.INFO)
 log_file = datetime.now().strftime('%Y_%m_%d_%H_%M_%S_Tau2_CMD.log')
 handler = logging.FileHandler(log_file, 'w', 'utf-8')
 handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
@@ -139,7 +139,7 @@ class FLIR_Tau2(object):
             fmt = ">cxccccccxxx" 
 
         data = struct.pack(fmt, *packet) 
-        log_cmd.debug("CMD : Sending {}".format(data)) 
+        log_cmd.info("CMD : Sending {}".format(data)) 
 
         self._send_data(data)
     
@@ -163,7 +163,7 @@ class FLIR_Tau2(object):
         argument_length = function.reply_bytes
         data = self._receive_data(10+argument_length)
 
-        log_cmd.debug("CMD : Received: {}".format(data))
+        log_cmd.info("CMD : Received: {}".format(data))
 
         if self._check_header(data[:6]) and len(data) > 0:
             if argument_length == 0:
@@ -1153,34 +1153,7 @@ digital video.
 
 if __name__ == '__main__':
     
-    test = False
     operation = True
-    
-    if test == True:
-        print("========== CMD : TESTING ALL FUNCTIONS ==========")
-        Tau2 = FLIR_Tau2()
-        Tau2.ping()
-        Tau2.get_serial_number()
-        Tau2.get_baud_rate()
-        Tau2.get_gain_mode()
-        Tau2.set_gain_mode(gain_mode='high')
-        Tau2.get_ace_correct()
-        Tau2.disable_ace_correct()
-        Tau2.get_lens_number()
-        Tau2.get_fpa_temperature()
-        Tau2.get_shutter_temperature()
-        Tau2.set_shutter_temperature(shutter_temperature=22)
-        Tau2.do_ffc_short()
-        Tau2.do_ffc_long()
-        Tau2.get_housing_temperature()
-        Tau2.get_planck_coefficients()
-        Tau2.get_ffc_mode()
-        Tau2.set_ffc_mode(ffc_mode='manual')
-        Tau2.get_xp_mode()
-        Tau2.get_cmos_bit_depth()
-        Tau2.get_video_standard()
-        Tau2.get_lens_parameters()
-        Tau2.get_scene_parameters()
         
     if operation == True:
         Tau2 = FLIR_Tau2()
@@ -1194,10 +1167,10 @@ if __name__ == '__main__':
         if q_gain_mode != default_settings['gain_mode']['bytes']:
             print("CMD : GAIN MODE IS NOT CONFIGURED PROPERLY")
             log_cmd.error("CMD : GAIN MODE IS NOT CONFIGURED PROPERLY")
+            settings_state = False
         else:
             print("CMD : GAIN MODE IS CONFIGURED PROPERLY")
             log_cmd.info("CMD : GAIN MODE IS CONFIGURED PROPERLY")
-            settings_state = False
         
         # 2. Check lens number configuration
         _ = Tau2.set_lens_number(lens_number=default_settings['lens_number']['bytes'])
@@ -1206,10 +1179,10 @@ if __name__ == '__main__':
         if q_lens_number != default_settings['lens_number']['bytes']:
             print("CMD : LENS NUMBER IS NOT CONFIGURED PROPERLY")
             log_cmd.error("CMD : LENS NUMBER IS NOT CONFIGURED PROPERLY")
+            settings_state = False
         else:
             print("CMD : LENS NUMBER IS CONFIGURED PROPERLY")
             log_cmd.info("CMD : LENS NUMBER IS CONFIGURED PROPERLY")
-            settings_state = False
         
         # 3. Check shutter temperature
         _ = Tau2.set_shutter_temperature(shutter_temperature=default_settings['shutter_temperature']['value'])
@@ -1218,10 +1191,10 @@ if __name__ == '__main__':
         if q_shutter_temperature != default_settings['shutter_temperature']['value']:
             print("CMD : SHUTTER TEMPERATURE IS NOT CONFIGURED PROPERLY")
             log_cmd.error("CMD : SHUTTER TEMPERATURE IS NOT CONFIGURED PROPERLY")
+            settings_state = False
         else:
             print("CMD : SHUTTER TEMPERATURE IS CONFIGURED PROPERLY")
             log_cmd.info("CMD : SHUTTER TEMPERATURE IS CONFIGURED PROPERLY")
-            settings_state = False
         
         # 4. Check FFC mode
         _ = Tau2.set_ffc_mode(ffc_mode=default_settings['ffc_mode']['bytes'])
@@ -1230,10 +1203,10 @@ if __name__ == '__main__':
         if q_ffc_mode != default_settings['ffc_mode']['bytes']:
             print("CMD : FFC MODE IS NOT CONFIGURED PROPERLY")
             log_cmd.error("CMD : FFC MODE IS NOT CONFIGURED PROPERLY")
+            settings_state = False
         else:
             print("CMD : FFC MODE IS CONFIGURED PROPERLY")
             log_cmd.info("CMD : FFC MODE IS CONFIGURED PROPERLY")
-            settings_state = False
         
         # 5. Check FFC frames
         _ = Tau2.set_ffc_frames(ffc_frames=default_settings['ffc_frames']['bytes'])
@@ -1242,10 +1215,10 @@ if __name__ == '__main__':
         if q_ffc_frames != default_settings['ffc_frames']['bytes']:
             print("CMD : FFC FRAMES IS NOT CONFIGURED PROPERLY")
             log_cmd.error("CMD : FFC FRAMES IS NOT CONFIGURED PROPERLY")
+            settings_state = False
         else:
             print("CMD : FFC FRAMES IS CONFIGURED PROPERLY")
             log_cmd.info("CMD : FFC FRAMES IS CONFIGURED PROPERLY")
-            settings_state = False
         
         # 6. Check bit depth
         _ = Tau2.set_xp_mode(xp_mode=default_settings['xp_mode']['bytes'])
@@ -1254,10 +1227,10 @@ if __name__ == '__main__':
         if q_xp_mode != default_settings['xp_mode']['return']:
             print("CMD : XP MODE IS NOT CONFIGURED PROPERLY")
             log_cmd.error("CMD : XP MODE IS NOT CONFIGURED PROPERLY")
+            settings_state = False
         else:
             print("CMD : XP MODE IS CONFIGURED PROPERLY")
             log_cmd.info("CMD : XP MODE IS CONFIGURED PROPERLY")
-            settings_state = False
         
         # 7. Check CMOS bit depth
         _ = Tau2.set_cmos_bit_depth(cmos_bit_depth=default_settings['cmos_bit_depth']['bytes'])
@@ -1266,10 +1239,10 @@ if __name__ == '__main__':
         if q_cmos_bit_depth != default_settings['cmos_bit_depth']['return']:
             print("CMD : CMOS BITDEPTH IS NOT CONFIGURED PROPERLY")
             log_cmd.error("CMD : CMOS BITDEPTH IS NOT CONFIGURED PROPERLY")
+            settings_state = False
         else:
             print("CMD : CMOS BITDEPTH IS CONFIGURED PROPERLY")
             log_cmd.info("CMD : CMOS BITDEPTH IS CONFIGURED PROPERLY")
-            settings_state = False
         
         # 8. Check Tlinear Tlinear state
         _ = Tau2.set_tlinear_mode(tlinear_mode=default_settings['tlinear_mode']['bytes'])
@@ -1278,15 +1251,14 @@ if __name__ == '__main__':
         if q_tlinear_mode != default_settings['tlinear_mode']['bytes']:
             print("CMD : TLINEAR MODE IS NOT CONFIGURED PROPERLY")
             log_cmd.error("CMD : TLINEAR MODE IS NOT CONFIGURED PROPERLY")
+            settings_state = False
         else:
             print("CMD : TLINEAR MODE IS CONFIGURED PROPERLY")
             log_cmd.info("CMD : TLINEAR MODE IS CONFIGURED PROPERLY")
-            settings_state = False
             
         if settings_state == True:
             print("CMD : ALL PARAMETERS SET, CAN START ACQUISITION")
-            log.info("CMD : ALL PARAMETERS SET, CAN START ACQUISITION")
+            log_cmd.info("CMD : ALL PARAMETERS SET, CAN START ACQUISITION")
         else:
             print("CMD : AN ERROR OCCURED WHILE SETTING UP PARAMETERS")
-            log.error("CMD : AN ERROR OCCURED WHILE SETTING UP PARAMETERS")
-        
+            log_cmd.error("CMD : AN ERROR OCCURED WHILE SETTING UP PARAMETERS")
