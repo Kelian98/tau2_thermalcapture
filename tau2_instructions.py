@@ -1,3 +1,15 @@
+# Properties for FITS HEADERS
+CAMERA = 'FLIR TAU2'
+IMTYPE = 'IR'
+FILTER = 'None'
+FOCAL = 60 # in mm
+APERTURE = 1.25 # focal ratio
+PXSIZE = 17 # in um
+OBSERVER = 'John Doe'
+TARGET = 'FLIR BB'
+LATOBS = 43.6
+LONGOBS = 3.8
+
 class code:
     def __init__(self, code = 0, cmd_bytes = 0, reply_bytes = 0):
         self.code = code # function code
@@ -49,6 +61,8 @@ default_settings = {"gain_mode" :
                         }
                     }
 
+# ========== Tau2 commands from official software IDD ========== #
+
 # Tau Status codes
 CAM_OK = 0x00
 CAM_NOT_READY = 0x02
@@ -91,6 +105,7 @@ SET_FFC_TEMP_DELTA_HIGH_GAIN = code(0x0E, 2, 2)
 SET_FFC_TEMP_DELTA = code(0x0E, 4, 4)
 GET_FFC_WARN_TIME = code(0x3C, 0, 2)
 SET_FFC_WARN_TIME = code(0x3C, 2, 2)
+WRITE_NVFFC_TABLE = code(0xC6, 0, 0)
 
 # Image processing
 GET_DIGITAL_OUTPUT_MODE = code(0x12, 0, 2)
@@ -103,16 +118,6 @@ GET_LVDS_BIT_DEPTH = code(0x12, 2, 2)
 SET_LVDS_BIT_DEPTH = code(0x12, 2, 2)
 GET_LVDS_MODE = code(0x12, 2, 2)
 SET_LVDS_MODE = code(0x12, 2, 2)
-
-SET_CONTRAST = code(0x14, 0, 2)
-GET_CONTRAST = code(0x14, 2, 2)
-SET_BRIGHTNESS = code(0x15, 0, 2)
-GET_BRIGHTNESS = code(0x15, 2, 2)
-SET_BRIGHTNESS_BIAS = code(0x18, 0, 2)
-GET_BRIGHTNESS_BIAS = code(0x18, 2, 2)
-SET_AGC_TAIL_SIZE = code(0x1B, 0, 2)
-GET_AGC_TAIL_SIZE = code(0x1B, 2, 2)
-
 SET_AGC_ACE_CORRECT = code(0x1C, 2, 0)
 GET_AGC_ACE_CORRECT = code(0x1C, 0, 2)
 
@@ -132,14 +137,6 @@ GET_HOUSING_TEMPERATURE = code(0x20, 2, 2)
 GET_EXTERNAL_SYNC = code(0x21, 0, 2)
 SET_EXTERNAL_SYNC = code(0x21, 2, 2)
 
-# Isotherm
-GET_ISOTHERM = code(0x22, 0, 2)
-SET_ISOTHERM = code(0x22, 2, 2)
-GET_ISOTHERM_THRESHOLD = code(0x23, 0, 6)
-SET_ISOTHERM_THRESHOLD = code(0x23, 6, 6)
-GET_ISOTHERM_THRESHOLD_FOUR = code(0x23, 4, 4)
-SET_ISOTHERM_THRESHOLD_FOUR = code(0x23, 4, 4)
-
 # Shutter
 GET_SHUTTER_TEMP = code(0x4D, 0, 2)
 SET_SHUTTER_TEMP = code(0x4D, 2, 0)
@@ -152,9 +149,6 @@ SET_SHUTTER_POSITION = code(0x79, 2, 2)
 GET_TLINEAR_MODE = code(0x8E, 2, 2)
 SET_TLINEAR_MODE = code(0x8E, 4, 0)
 
-# FFC
-WRITE_NVFFC_TABLE = code(0xC6, 0, 0) # Writes the FFC map to nonvolatile memory
-
 # Frame transfer
 TRANSFER_FRAME = code(0x82, 4, 4)
 GET_MEMORY_ADDRESS = code(0xD6, 4, 8)
@@ -162,6 +156,7 @@ GET_NV_MEMORY_SIZE = code(0xD5, 2, 8)
 READ_MEMORY_256 = code(0xD2, 6, 256)
 ERASE_BLOCK = code(0xD4, 2, 2)
 MEMORY_STATUS = code(0xC4, 0, 2)
+READ_ARRAY_AVERAGE = code(0x68, 0, 4)
 
 # Lens response parameters
 GET_LENS_RESPONSE_PARAMS = code(0xE5, 2, 4)
@@ -176,5 +171,3 @@ SET_PLANCK_COEFFICIENTS = code(0xB9, 18, 18)
 # Video standard
 GET_VIDEO_STANDARD = code(0x72, 0, 2)
 SET_VIDEO_STANDARD = code(0x72, 2, 2)
-
-READ_ARRAY_AVERAGE = code(0x68, 0, 4)

@@ -40,7 +40,7 @@ handler = logging.FileHandler(new_dir+'/'+log_file, 'w', 'utf-8')
 handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
 log_acq.addHandler(handler)
 
-from tau2_instructions import default_settings
+from tau2_instructions import *
 
 class TeaxGrabber(object):
     """
@@ -254,40 +254,45 @@ class TeaxGrabber(object):
         print("========== ACQ : Disconnecting from camera ==========")
         log_acq.info("========== ACQ : Disconnecting from camera ==========")
         
-    def grab_image(self, duration=1.0, display=False):
+    def grab_image(self, fpa_temperature, housing_temperature, duration=1.0, sequence=1, average=False, display=False):
         """Grab sequence of images for a specific duration period
 
         Parameters
         ----------
+        fpa_temperature : float
+            Temperature of Focal Plane Array for FITS headers
+        housing_temperature : float
+            Temperature of housing electronic of the camera for FITS headers
         duration : float
             Duration for which the buffer is read
+        sequence : int
+            Sequence number
+        average : bool
+            Set to True in order to average images per sequence
         display : bool
             Plot images
 
-        Returns
-        -------
-        list_img : list
-            List of images with the right properties
-
         """
         
-        data = b''
+        for s in range(0, sequence):
         
-        self._ftdi.purge_buffers()
-        # self._ftdi.purge_rx_buffer()
-        # self._ftdi.purge_tx_buffer()
-        log_acq.info("Read buffer for {} seconds".format(duration))
-        t = time.time()
-        t_format = time.strftime('%Y-%m-%dT%H:%M:%S')
-        while time.time()-t < duration: 
-            data += self._read()
+            data = b''
             
-        if len(data)>self.frame_size:
-            list_img = self.create_images(data)
-            self.write_images(list_img, t_format)
-            if display == True:
-                self.plot_images(list_img)
-            return list_img
+            self._ftdi.purge_buffers()
+
+            log_acq.info("Read buffer for {} seconds".format(duration))
+            t = time.time()
+            t_format = time.strftime('%Y-%m-%dT%H:%M:%S')
+            while time.time()-t < duration: 
+                data += self._read()
+                
+            if len(data)>self.frame_size:
+                list_img = self.create_images(data)
+                list_img = [i for i in list_img if i is not None]
+                self.write_images(list_img, t_format, s, average, fpa_temperature, housing_temperature)
+                if display == True:
+                    self.plot_images(list_img)
+                # return list_img
             
     def create_images(self, data):
         """Create list of images with raw bytesarray data
@@ -345,37 +350,82 @@ class TeaxGrabber(object):
             
         plt.show()
 
-    def write_images(self, list_img, date_obs):
+    def write_images(self, list_img, date_obs, s, average, fpa_temperature, housing_temperature):
         """Write images with headers to FITS file format
 
         Parameters
         ----------
         list_img : list
             List of images with the right properties
+        date_obs : str
+            Date of observation for FITS headers
+        s : int
+            Sequence number
+        average : bool
+            Set to True in order to average images per sequence
+        fpa_temperature : float
+            Temperature of Focal Plane Array for FITS headers
+        housing_temperature : float
+            Temperature of housing electronic of the camera for FITS headers
 
         """
-
-        i=0
-        for img in list_img:
-            if img is not None:
+        if average == False:
+            i=0
+            for img in list_img:
                 hdu = fits.PrimaryHDU(img)
                 hdu.scale('int16')
-                hdu.header['CAMERA'] = 'FLIR TAU2'
-                hdu.header['IMTYPE'] = 'IR'
+                hdu.header['CAMERA'] = CAMERA
+                hdu.header['FILTER'] = FILTER
+                hdu.header['FOCAL'] = FOCAL
+                hdu.header['APERTURE'] = APERTURE
+                hdu.header['PXSIZE'] = PXSIZE
+                hdu.header['IMTYPE'] = IMTYPE
+                hdu.header['OBSERVER'] = OBSERVER
+                hdu.header['TARGET'] = TARGET
+                hdu.header['LATOBS'] = LATOBS
+                hdu.header['LONGOBS'] = LONGOBS
                 hdu.header['DATE-OBS'] = date_obs
-                hdu.header['FOCAL'] = 60 # in mm
-                hdu.header['APERTURE'] = 1.25
-                hdu.header['PXSIZE'] = 17 # in micrometer
                 hdu.header['INDEX'] = i
                 hdu.header['GAIN'] = default_settings['gain_mode']['value']
                 hdu.header['LENS'] = default_settings['lens_number']['value']
                 hdu.header['SHU-TEMP'] = default_settings['shutter_temperature']['value']
+                hdu.header['FPA-TEMP'] = fpa_temperature
+                hdu.header['IN-TEMP'] = housing_temperature
                 hdu.header['FFCMODE'] = default_settings['ffc_mode']['value']
                 hdu.header['FFCFRAME'] = default_settings['ffc_frames']['value']
                 hdu.header['XPMODE'] = default_settings['xp_mode']['value']
                 hdu.header['CMOSBD'] = default_settings['cmos_bit_depth']['value']
                 hdu.header['TLINEAR'] = default_settings['tlinear_mode']['value']
-                hdu.writeto(new_dir+'/'+datetime.now().strftime('%Y_%m_%d_%H_%M_%S_flux_{}.fits'.format(i)), overwrite=True)
+                hdu.writeto(new_dir+'/'+datetime.now().strftime('%Y_%m_%d_%H_%M_%S_flux_SEQ_{}_N_{}.fits'.format(s, i)), overwrite=True)
                 i=i+1
-
-        log_acq.info("Image sequence written to FITS files")
+                
+        else:
+            average_image = np.sum(list_img, axis=0)/len(list_img)
+            average_image = np.round(average_image, 0)
+            hdu = fits.PrimaryHDU(average_image)
+            hdu.scale('int16')
+            hdu.header['CAMERA'] = CAMERA
+            hdu.header['FILTER'] = FILTER
+            hdu.header['FOCAL'] = FOCAL
+            hdu.header['APERTURE'] = APERTURE
+            hdu.header['PXSIZE'] = PXSIZE
+            hdu.header['IMTYPE'] = IMTYPE
+            hdu.header['OBSERVER'] = OBSERVER
+            hdu.header['TARGET'] = TARGET
+            hdu.header['LATOBS'] = LATOBS
+            hdu.header['LONGOBS'] = LONGOBS
+            hdu.header['DATE-OBS'] = date_obs
+            hdu.header['GAIN'] = default_settings['gain_mode']['value']
+            hdu.header['LENS'] = default_settings['lens_number']['value']
+            hdu.header['SHU-TEMP'] = default_settings['shutter_temperature']['value']
+            hdu.header['FPA-TEMP'] = fpa_temperature
+            hdu.header['IN-TEMP'] = housing_temperature
+            hdu.header['FFCMODE'] = default_settings['ffc_mode']['value']
+            hdu.header['FFCFRAME'] = default_settings['ffc_frames']['value']
+            hdu.header['XPMODE'] = default_settings['xp_mode']['value']
+            hdu.header['CMOSBD'] = default_settings['cmos_bit_depth']['value']
+            hdu.header['TLINEAR'] = default_settings['tlinear_mode']['value']
+            hdu.writeto(new_dir+'/'+datetime.now().strftime('%Y_%m_%d_%H_%M_%S_flux_SEQ_{}.fits'.format(s)), overwrite=True)
+            
+        log_acq.info("Image sequence #{} written to FITS files".format(s))
+        print("{} : Image sequence #{} written to FITS files".format(date_obs, s))
