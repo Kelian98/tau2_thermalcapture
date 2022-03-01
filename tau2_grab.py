@@ -345,7 +345,7 @@ class TeaxGrabber(object):
         for img in list_img:
             if img is not None:
                 plt.figure()
-                plt.imshow(img, cmap='seismic')
+                plt.imshow(img)
                 plt.colorbar()
             
         plt.show()
