@@ -18,15 +18,14 @@ from astropy.io import fits
 import tqdm
 import math
 import os
-
 import usb.core
 import usb.util
 from pyftdi.ftdi import Ftdi
 import pyftdi.serialext
-
 import matplotlib.pyplot as plt
 plt.style.use('seaborn-white')
 
+# Create new folder to store images
 time_sync = datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
 curr_path = os.getcwd()
 new_dir = curr_path+'/'+time_sync
@@ -400,32 +399,37 @@ class TeaxGrabber(object):
                 i=i+1
                 
         else:
-            average_image = np.sum(list_img, axis=0)/len(list_img)
-            average_image = np.round(average_image, 0)
-            hdu = fits.PrimaryHDU(average_image)
-            hdu.scale('int16')
-            hdu.header['CAMERA'] = CAMERA
-            hdu.header['FILTER'] = FILTER
-            hdu.header['FOCAL'] = FOCAL
-            hdu.header['APERTURE'] = APERTURE
-            hdu.header['PXSIZE'] = PXSIZE
-            hdu.header['IMTYPE'] = IMTYPE
-            hdu.header['OBSERVER'] = OBSERVER
-            hdu.header['TARGET'] = TARGET
-            hdu.header['LATOBS'] = LATOBS
-            hdu.header['LONGOBS'] = LONGOBS
-            hdu.header['DATE-OBS'] = date_obs
-            hdu.header['GAIN'] = default_settings['gain_mode']['value']
-            hdu.header['LENS'] = default_settings['lens_number']['value']
-            hdu.header['SHU-TEMP'] = default_settings['shutter_temperature']['value']
-            hdu.header['FPA-TEMP'] = fpa_temperature
-            hdu.header['IN-TEMP'] = housing_temperature
-            hdu.header['FFCMODE'] = default_settings['ffc_mode']['value']
-            hdu.header['FFCFRAME'] = default_settings['ffc_frames']['value']
-            hdu.header['XPMODE'] = default_settings['xp_mode']['value']
-            hdu.header['CMOSBD'] = default_settings['cmos_bit_depth']['value']
-            hdu.header['TLINEAR'] = default_settings['tlinear_mode']['value']
-            hdu.writeto(new_dir+'/'+datetime.now().strftime('%Y_%m_%d_%H_%M_%S_flux_SEQ_{}.fits'.format(s)), overwrite=True)
-            
+            try:
+                average_image = np.sum(list_img, axis=0)/len(list_img)
+                average_image = np.round(average_image, 0)
+                hdu = fits.PrimaryHDU(average_image)
+                hdu.scale('int16')
+                hdu.header['CAMERA'] = CAMERA
+                hdu.header['FILTER'] = FILTER
+                hdu.header['FOCAL'] = FOCAL
+                hdu.header['APERTURE'] = APERTURE
+                hdu.header['PXSIZE'] = PXSIZE
+                hdu.header['IMTYPE'] = IMTYPE
+                hdu.header['OBSERVER'] = OBSERVER
+                hdu.header['TARGET'] = TARGET
+                hdu.header['LATOBS'] = LATOBS
+                hdu.header['LONGOBS'] = LONGOBS
+                hdu.header['DATE-OBS'] = date_obs
+                hdu.header['NAVERAGE'] = len(list_img)
+                hdu.header['GAIN'] = default_settings['gain_mode']['value']
+                hdu.header['LENS'] = default_settings['lens_number']['value']
+                hdu.header['SHU-TEMP'] = default_settings['shutter_temperature']['value']
+                hdu.header['FPA-TEMP'] = fpa_temperature
+                hdu.header['IN-TEMP'] = housing_temperature
+                hdu.header['FFCMODE'] = default_settings['ffc_mode']['value']
+                hdu.header['FFCFRAME'] = default_settings['ffc_frames']['value']
+                hdu.header['XPMODE'] = default_settings['xp_mode']['value']
+                hdu.header['CMOSBD'] = default_settings['cmos_bit_depth']['value']
+                hdu.header['TLINEAR'] = default_settings['tlinear_mode']['value']
+                hdu.writeto(new_dir+'/'+datetime.now().strftime('%Y_%m_%d_%H_%M_%S_flux.fits'), overwrite=True)
+            except:
+               log_acq.error("ERROR : Image sequence #{} NOT written to FITS files".format(s))
+               print("{} : ERROR : Image sequence #{} NOT written to FITS files".format(date_obs, s))
+ 
         log_acq.info("Image sequence #{} written to FITS files".format(s))
         print("{} : Image sequence #{} written to FITS files".format(date_obs, s))

@@ -45,7 +45,10 @@ class FLIR_Tau2(object):
         """
 
         # Serial instance
-        self.ser = serial.Serial(port=port, baudrate=baudrate)
+        try:
+            self.ser = serial.Serial(port=port, baudrate=baudrate)
+        except:
+            self.ser = serial.Serial(port='/dev/ttyUSB1', baudrate=baudrate)
 
         if self.ser.is_open == True:
             print("========== CMD : Connected to the FLIR Tau2 camera ==========")
