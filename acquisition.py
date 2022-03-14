@@ -7,9 +7,9 @@ try:
     NSEQ = int(sys.argv[1])
 except:
     print("Error parsing NSEQ")
-# NSEQ = 5000
+# NSEQ = 5000
 
-# Loop
+# Loop
 # Instantiate control class in serial mode
 Tau2 = FLIR_Tau2()
 settings_state = Tau2.check_settings()
@@ -50,6 +50,27 @@ if settings_state == True:
                         Tau2.ser.close()
                         time.sleep(0.1)
                         camera.connect()
+                        
+                if i>0 and i%100==0:
+                    
+                    camera.close()
+                    time.sleep(0.1)
+                    
+                    if camera._ftdi.is_connected == False:
+                        try:
+                            Tau2.ser.port = '/dev/ttyUSB0'
+                            Tau2.ser.open()
+                        except:
+                            Tau2.ser.port = '/dev/ttyUSB1'
+                            Tau2.ser.open()
+                        
+                        Tau2.do_ffc_long()
+                        print("FFC IN PROGRES...")
+                        time.sleep(0.5)
+                        Tau2.ser.close()
+                        time.sleep(0.1)
+                        camera.connect()
+                    
 
             camera.close()
             

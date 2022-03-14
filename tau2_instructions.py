@@ -165,7 +165,7 @@ GET_SCENE_PARAMS = code(0xE5, 2, 2)
 SET_SCENE_PARAMS = code(0xE5, 4, 0)
 
 # Radiometry
-GET_PLANCK_COEFFICIENTS = code(0xB9, 2, 8)
+GET_PLANCK_COEFFICIENTS = code(0xB9, 2, 16)
 SET_PLANCK_COEFFICIENTS = code(0xB9, 18, 18)
 
 # Video standard

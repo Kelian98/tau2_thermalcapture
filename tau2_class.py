@@ -660,17 +660,13 @@ class FLIR_Tau2(object):
         argument = struct.pack(">h", 0x0200)
         self._send_packet(function, argument)
         res = self._read_packet(function)
-
-        res = b''.join(res)
-        # O = struct.unpack(">i", b'\x00'+res[0:3])[0]
-        # F = struct.unpack(">i", b'\x00'+res[4:7])[0]
-        # R = struct.unpack(">i", b'\x00'+res[8:11])[0]
-        # B = struct.unpack(">i", b'\x00'+res[12:15])[0]
         
-        R = struct.unpack(">i", b'\x00'+res[0:3])[0]
-        B = struct.unpack(">i", b'\x00'+res[4:7])[0]
-        F = struct.unpack(">i", b'\x00'+res[8:11])[0]
-        O = struct.unpack(">i", b'\x00'+res[12:15])[0]
+        res = res[7]
+        
+        R = struct.unpack(">I", res[0:4])[0]
+        B = struct.unpack(">I", res[4:8])[0]
+        F = struct.unpack(">I", res[8:12])[0]
+        O = struct.unpack(">i", res[12:16])[0]
 
         print('R:', R)
         print('B:', B)
