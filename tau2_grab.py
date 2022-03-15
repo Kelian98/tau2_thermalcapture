@@ -253,7 +253,7 @@ class TeaxGrabber(object):
         print("========== ACQ : Disconnecting from camera ==========")
         log_acq.info("========== ACQ : Disconnecting from camera ==========")
         
-    def grab_image(self, fpa_temperature, housing_temperature, duration=1.0, sequence=1, average=False, display=False):
+    def grab_image(self, fpa_temperature, housing_temperature, shutter_temperature, duration=1.0, sequence=1, average=False, display=False):
         """Grab sequence of images for a specific duration period
 
         Parameters
@@ -262,6 +262,8 @@ class TeaxGrabber(object):
             Temperature of Focal Plane Array for FITS headers
         housing_temperature : float
             Temperature of housing electronic of the camera for FITS headers
+        shutter_temperature : float
+            Temperature of FFC target for FITS headers
         duration : float
             Duration for which the buffer is read
         sequence : int
@@ -288,7 +290,7 @@ class TeaxGrabber(object):
             if len(data)>self.frame_size:
                 list_img = self.create_images(data)
                 list_img = [i for i in list_img if i is not None]
-                self.write_images(list_img, t_format, s, average, fpa_temperature, housing_temperature)
+                self.write_images(list_img, t_format, s, average, fpa_temperature, housing_temperature, shutter_temperature)
                 if display == True:
                     self.plot_images(list_img)
                 # return list_img
@@ -349,7 +351,7 @@ class TeaxGrabber(object):
             
         plt.show()
 
-    def write_images(self, list_img, date_obs, s, average, fpa_temperature, housing_temperature):
+    def write_images(self, list_img, date_obs, s, average, fpa_temperature, housing_temperature, shutter_temperature):
         """Write images with headers to FITS file format
 
         Parameters
@@ -387,7 +389,8 @@ class TeaxGrabber(object):
                 hdu.header['INDEX'] = i
                 hdu.header['GAIN'] = default_settings['gain_mode']['value']
                 hdu.header['LENS'] = default_settings['lens_number']['value']
-                hdu.header['SHU-TEMP'] = default_settings['shutter_temperature']['value']
+                hdu.header['SHU-TEMP'] = shutter_temperature
+                hdu.header['SHU-MODE'] = default_settings['shutter_temperature_mode']['value']
                 hdu.header['FPA-TEMP'] = fpa_temperature
                 hdu.header['IN-TEMP'] = housing_temperature
                 hdu.header['FFCMODE'] = default_settings['ffc_mode']['value']
@@ -418,7 +421,8 @@ class TeaxGrabber(object):
                 hdu.header['NAVERAGE'] = len(list_img)
                 hdu.header['GAIN'] = default_settings['gain_mode']['value']
                 hdu.header['LENS'] = default_settings['lens_number']['value']
-                hdu.header['SHU-TEMP'] = default_settings['shutter_temperature']['value']
+                hdu.header['SHU-TEMP'] = shutter_temperature
+                hdu.header['SHU-MODE'] = default_settings['shutter_temperature_mode']['value']
                 hdu.header['FPA-TEMP'] = fpa_temperature
                 hdu.header['IN-TEMP'] = housing_temperature
                 hdu.header['FFCMODE'] = default_settings['ffc_mode']['value']

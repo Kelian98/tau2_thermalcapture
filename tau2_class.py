@@ -16,7 +16,6 @@ import logging
 import numpy as np
 import tqdm
 import math
-from scipy import interpolate
 from tau2_instructions import *
 
 # Setting up log file
@@ -581,6 +580,61 @@ class FLIR_Tau2(object):
         return shutter_temperature, res
     
     @_flush_in_out
+    def get_shutter_temperature_mode(self):
+        """Gets the mode of shutter temperature usage.
+
+        Returns
+        -------
+        res : tuple
+            Raw response from the camera in bytes
+        """
+        
+        function = GET_SHUTTER_TEMP_MODE
+        arg1=b'\x00\x01'
+        arg2=b'\x00\x00'
+        argument=arg1+arg2
+        self._send_packet(function, argument)
+        res = self._read_packet(function)
+        shutter_temperature_mode = res[7]
+        
+        if shutter_temperature_mode == b'\x00\x00':
+            print("SHUTTER TEMP MODE : 0X0000 = User, User specified shutter temperature")
+            log_cmd.info("SHUTTER TEMP MODE : 0X0000 = User, User specified shutter temperature")
+        elif shutter_temperature_mode == b'\x00\x01':
+            print("SHUTTER TEMP MODE : 0X0001 = Automatic, calibrated temperatures")
+            log_cmd.info("SHUTTER TEMP MODE : 0X0001 = Automatic, calibrated temperatures")
+        elif shutter_temperature_mode == b'\x00\x02':
+            print("SHUTTER TEMP MODE : 0x0002 = Static, shutter-less operation")
+            log_cmd.info("SHUTTER TEMP MODE : 0x0002 = Static, shutter-less operation")
+
+        return shutter_temperature_mode, res
+    
+    @_flush_in_out
+    def set_shutter_temperature_mode(self, shutter_temperature_mode):
+        """Sets the mode of shutter temperature usage.
+
+        Parameters
+        ----------
+        shutter_temperature_mode : float
+            Shutter temperature mode for FFC calibration
+
+        Returns
+        -------
+        res : tuple
+            Raw response from the camera in bytes
+
+        """
+
+        function = SET_SHUTTER_TEMP_MODE
+        arg1 = b'\x00\x00'
+        arg2 = shutter_temperature_mode
+        argument = arg1 + arg2
+        self._send_packet(function, argument)
+        res = self._read_packet(function)
+        
+        return res
+        
+    @_flush_in_out
     def set_shutter_temperature(self, shutter_temperature):
         """Sets the temperature of the shutter (both internal & external) as used for radiometry.
 
@@ -597,7 +651,7 @@ class FLIR_Tau2(object):
         """
 
         function = SET_SHUTTER_TEMP
-        argument = struct.pack(">h", shutter_temperature*100)
+        argument = struct.pack(">h", int(shutter_temperature*100))
         self._send_packet(function, argument)
         res = self._read_packet(function)
         
@@ -613,9 +667,16 @@ class FLIR_Tau2(object):
             Raw response from the camera in bytes
 
         """
+        
+        print("========== FFC IN PROGRESS ==========")
+        log_cmd.info("========== FFC IN PROGRESS ==========")
+        
         function = DO_FFC_SHORT
         self._send_packet(function)
         res = self._read_packet(function)
+        
+        print("========== FFC DONE ==========")
+        log_cmd.info("========== FFC DONE ==========")
         
         return res
         
@@ -1087,16 +1148,6 @@ digital video.
         res = b''.join(res)
         focal_ratio = struct.unpack(">h", res[7:9])[0]
         transmission = struct.unpack(">h", res[9:11])[0]
-
-        x_focal = [4096, 65535]
-        y_focal = [0.5, 8.0]
-        f_focal = interpolate.interp1d(x_focal, y_focal)
-        focal_ratio = f_focal(focal_ratio)
-
-        x_transmission = [4096, 8192]
-        y_transmission = [0.5, 1.0]
-        f_transmission = interpolate.interp1d(x_transmission, y_transmission)
-        transmission = f_transmission(transmission)
         
         print("Focal ratio: {}".format(focal_ratio))
         print("Transmission: {}".format(transmission))
@@ -1176,18 +1227,18 @@ digital video.
         else:
             print("CMD : LENS NUMBER IS CONFIGURED PROPERLY")
             log_cmd.info("CMD : LENS NUMBER IS CONFIGURED PROPERLY")
+            
+        # 3. Check shutter temperature mode
+        _ = self.set_shutter_temperature_mode(shutter_temperature_mode=default_settings['shutter_temperature_mode']['bytes'])
+        q_shutter_temperature_mode, _ = self.get_shutter_temperature_mode()
 
-        # 3. Check shutter temperature
-        _ = self.set_shutter_temperature(shutter_temperature=default_settings['shutter_temperature']['value'])
-        q_shutter_temperature, _ = self.get_shutter_temperature()
-
-        if q_shutter_temperature != default_settings['shutter_temperature']['value']:
-            print("CMD : SHUTTER TEMPERATURE IS NOT CONFIGURED PROPERLY")
-            log_cmd.error("CMD : SHUTTER TEMPERATURE IS NOT CONFIGURED PROPERLY")
+        if q_shutter_temperature_mode != default_settings['shutter_temperature_mode']['bytes']:
+            print("CMD : SHUTTER TEMPERATURE MODE IS NOT CONFIGURED PROPERLY")
+            log_cmd.error("CMD : SHUTTER TEMPERATURE MODE IS NOT CONFIGURED PROPERLY")
             settings_state = False
         else:
-            print("CMD : SHUTTER TEMPERATURE IS CONFIGURED PROPERLY")
-            log_cmd.info("CMD : SHUTTER TEMPERATURE IS CONFIGURED PROPERLY")
+            print("CMD : SHUTTER TEMPERATURE MODE IS CONFIGURED PROPERLY")
+            log_cmd.info("CMD : SHUTTER TEMPERATURE MODE IS CONFIGURED PROPERLY")
 
         # 4. Check FFC mode
         _ = self.set_ffc_mode(ffc_mode=default_settings['ffc_mode']['bytes'])
@@ -1261,6 +1312,7 @@ if __name__ == '__main__':
     if settings_state == True:
         print("CMD : ALL PARAMETERS SET, CAN START ACQUISITION")
         log_cmd.info("CMD : ALL PARAMETERS SET, CAN START ACQUISITION")
+        Tau2.do_ffc_short()
     else:
         print("CMD : AN ERROR OCCURED WHILE SETTING UP PARAMETERS")
         log_cmd.error("CMD : AN ERROR OCCURED WHILE SETTING UP PARAMETERS")

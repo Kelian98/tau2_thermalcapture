@@ -5,6 +5,7 @@ import sys
 
 try:
     NSEQ = int(sys.argv[1])
+    t_shutter = float(sys.argv[2])
 except:
     print("Error parsing NSEQ")
 # NSEQ = 5000
@@ -15,6 +16,10 @@ Tau2 = FLIR_Tau2()
 settings_state = Tau2.check_settings()
 fpa_temperature, _ = Tau2.get_fpa_temperature()
 housing_temperature, _ = Tau2.get_housing_temperature()
+Tau2.set_shutter_temperature(t_shutter)
+q_tshutter, _ = Tau2.get_shutter_temperature()
+print(q_tshutter)
+Tau2.do_ffc_short()
 Tau2.ser.close()
 
 if settings_state == True:
@@ -30,7 +35,7 @@ if settings_state == True:
             for i in range(0, NSEQ):
                 
                 print("SEQUENCE #{} of {}".format(i+1, NSEQ))
-                camera.grab_image(fpa_temperature, housing_temperature, duration=1.0, sequence=1, average=True, display=False)
+                camera.grab_image(fpa_temperature, housing_temperature, t_shutter, duration=1.0, sequence=1, average=True, display=False)
                 
                 if i>0 and i%10==0:
                     
@@ -47,30 +52,14 @@ if settings_state == True:
                             
                         fpa_temperature, _ = Tau2.get_fpa_temperature()
                         housing_temperature, _ = Tau2.get_housing_temperature()
+                        
+                        if i%10==0:
+                            Tau2.do_ffc_short()
+                            time.sleep(0.5)
+                            
                         Tau2.ser.close()
                         time.sleep(0.1)
                         camera.connect()
-                        
-                if i>0 and i%100==0:
-                    
-                    camera.close()
-                    time.sleep(0.1)
-                    
-                    if camera._ftdi.is_connected == False:
-                        try:
-                            Tau2.ser.port = '/dev/ttyUSB0'
-                            Tau2.ser.open()
-                        except:
-                            Tau2.ser.port = '/dev/ttyUSB1'
-                            Tau2.ser.open()
-                        
-                        Tau2.do_ffc_long()
-                        print("FFC IN PROGRES...")
-                        time.sleep(0.5)
-                        Tau2.ser.close()
-                        time.sleep(0.1)
-                        camera.connect()
-                    
 
             camera.close()
             

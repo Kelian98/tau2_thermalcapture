@@ -27,15 +27,15 @@ default_settings = {"gain_mode" :
                          "bytes" : b'\x00\x00',
                          "comment" : 'Lens 0 configuration'
                         },
-                    "shutter_temperature" :
-                        {"value" : 22,
-                         "bytes" : None,
-                         "comment" : 'Default shutter temperature of 22C'
+                    "shutter_temperature_mode" :
+                        {"value" : 'user',
+                         "bytes" : b'\x00\x00',
+                         "comment" : '0x0000 = User, User specified shutter temperature'
                         },
                     "ffc_mode" :
-                        {"value" : 'manual',
-                         "bytes" : b'\x00\x00',
-                         "comment" : 'FFC in manual mode'
+                        {"value" : 'external',
+                         "bytes" : b'\x00\x02',
+                         "comment" : 'FFC in external mode'
                         },
                     "ffc_frames" :
                         {"value" : 16,
@@ -140,8 +140,8 @@ SET_EXTERNAL_SYNC = code(0x21, 2, 2)
 # Shutter
 GET_SHUTTER_TEMP = code(0x4D, 0, 2)
 SET_SHUTTER_TEMP = code(0x4D, 2, 0)
-GET_SHUTTER_TEMP_RADIOMETRY = code(0x4D, 4, 2)
-SET_SHUTTER_TEMP_RADIOMETRY = code(0x4D, 4, 0)
+GET_SHUTTER_TEMP_MODE = code(0x4D, 4, 2)
+SET_SHUTTER_TEMP_MODE = code(0x4D, 4, 0)
 GET_SHUTTER_POSITION = code(0x79, 0, 2)
 SET_SHUTTER_POSITION = code(0x79, 2, 2)
 
