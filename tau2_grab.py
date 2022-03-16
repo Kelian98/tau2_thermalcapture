@@ -253,7 +253,8 @@ class TeaxGrabber(object):
         print("========== ACQ : Disconnecting from camera ==========")
         log_acq.info("========== ACQ : Disconnecting from camera ==========")
         
-    def grab_image(self, fpa_temperature, housing_temperature, shutter_temperature, duration=1.0, sequence=1, average=False, display=False):
+    def grab_image(self, fpa_temperature, housing_temperature, shutter_temperature, ambient_temperature, ffc_before,
+                   duration=1.0, sequence=1, average=False, display=False):
         """Grab sequence of images for a specific duration period
 
         Parameters
@@ -264,6 +265,10 @@ class TeaxGrabber(object):
             Temperature of housing electronic of the camera for FITS headers
         shutter_temperature : float
             Temperature of FFC target for FITS headers
+        ambient_temperature : float
+            Ambient temperature close to the instrument
+        ffc_before : bool
+            Write if FFC flag in FITS header
         duration : float
             Duration for which the buffer is read
         sequence : int
@@ -290,7 +295,7 @@ class TeaxGrabber(object):
             if len(data)>self.frame_size:
                 list_img = self.create_images(data)
                 list_img = [i for i in list_img if i is not None]
-                self.write_images(list_img, t_format, s, average, fpa_temperature, housing_temperature, shutter_temperature)
+                self.write_images(list_img, t_format, s, average, fpa_temperature, housing_temperature, shutter_temperature, ambient_temperature, ffc_before)
                 if display == True:
                     self.plot_images(list_img)
                 # return list_img
@@ -351,7 +356,7 @@ class TeaxGrabber(object):
             
         plt.show()
 
-    def write_images(self, list_img, date_obs, s, average, fpa_temperature, housing_temperature, shutter_temperature):
+    def write_images(self, list_img, date_obs, s, average, fpa_temperature, housing_temperature, shutter_temperature, ambient_temperature, ffc_before):
         """Write images with headers to FITS file format
 
         Parameters
@@ -368,6 +373,12 @@ class TeaxGrabber(object):
             Temperature of Focal Plane Array for FITS headers
         housing_temperature : float
             Temperature of housing electronic of the camera for FITS headers
+        shutter_temperature : float
+            Temperature of FFC target for FITS headers
+        ambient_temperature : float
+            Ambient temperature close to the instrument
+        ffc_before : bool
+            Write if FFC flag in FITS header
 
         """
         if average == False:
@@ -393,6 +404,8 @@ class TeaxGrabber(object):
                 hdu.header['SHU-MODE'] = default_settings['shutter_temperature_mode']['value']
                 hdu.header['FPA-TEMP'] = fpa_temperature
                 hdu.header['IN-TEMP'] = housing_temperature
+                hdu.header['AMB-TEMP'] = ambient_temperature
+                hdu.header['FFC-BEF'] = ffc_before
                 hdu.header['FFCMODE'] = default_settings['ffc_mode']['value']
                 hdu.header['FFCFRAME'] = default_settings['ffc_frames']['value']
                 hdu.header['XPMODE'] = default_settings['xp_mode']['value']
@@ -425,6 +438,8 @@ class TeaxGrabber(object):
                 hdu.header['SHU-MODE'] = default_settings['shutter_temperature_mode']['value']
                 hdu.header['FPA-TEMP'] = fpa_temperature
                 hdu.header['IN-TEMP'] = housing_temperature
+                hdu.header['AMB-TEMP'] = ambient_temperature
+                hdu.header['FFC-BEF'] = ffc_before
                 hdu.header['FFCMODE'] = default_settings['ffc_mode']['value']
                 hdu.header['FFCFRAME'] = default_settings['ffc_frames']['value']
                 hdu.header['XPMODE'] = default_settings['xp_mode']['value']
