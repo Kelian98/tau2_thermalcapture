@@ -4,8 +4,8 @@
 ##################################################
 ## Authors: Kelian SOMMER, Bertrand PLEZ, Johann COHEN-TANUGI
 ## Credits: flirpy
-## Version: 1.2
-## Date : 2022-07-28
+## Version: 1.3
+## Date : 2022-08-29
 ##################################################
 
 import serial
@@ -16,13 +16,14 @@ from datetime import datetime
 import numpy as np
 import math
 import os
+import matplotlib.pyplot as plt
 import usb.core
 import usb.util
 from pyftdi.ftdi import Ftdi
 import pyftdi.serialext
 from tau2_instructions import *
 
-class TeaxGrabber(object):
+class FLIR_Tau2(object):
     """
     Class for command/control and data acquisition for the Teax ThermalCapture Grabber USB w/ FLIR Tau2 camera
     """
@@ -740,7 +741,7 @@ class TeaxGrabber(object):
         if shutter_temperature_mode == b'\x00\x00':
             print("SHUTTER TEMP MODE : 0X0000 = User, User specified shutter temperature")
         elif shutter_temperature_mode == b'\x00\x01':
-            print("SHUTTER TEMP MODE : 0X0001 = Automatic, calibrated temperatures"))
+            print("SHUTTER TEMP MODE : 0X0001 = Automatic, calibrated temperatures")
         elif shutter_temperature_mode == b'\x00\x02':
             print("SHUTTER TEMP MODE : 0x0002 = Static, shutter-less operation")
         return shutter_temperature_mode, res
@@ -1345,28 +1346,15 @@ digital video.
         return settings_state
 
     @_check_mode('syncff')
-    def grab_image(self, fpa_temperature, housing_temperature, blackbody_temperature, ambient_temperature, shutter_temperature, ffc_before, ffc_time,
-                   duration=1.0, sequence=1, average=False, display=False):
+    def grab_image(self, duration=1.0, sequence=1, display=False):
         """Grab sequence of images for a specific duration period
 
         Parameters
         ----------
-        fpa_temperature : float
-            Temperature of Focal Plane Array for FITS headers
-        housing_temperature : float
-            Temperature of housing electronic of the camera for FITS headers
-        shutter_temperature : float
-            Temperature of FFC target for FITS headers
-        ambient_temperature : float
-            Ambient temperature close to the instrument
-        ffc_before : bool
-            Write if FFC flag in FITS header
         duration : float
             Duration for which the buffer is read
         sequence : int
             Sequence number
-        average : bool
-            Set to True in order to average images per sequence
         display : bool
             Plot images
 
